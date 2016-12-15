@@ -605,7 +605,11 @@ namespace MakeItSo
                 }
 
                 // We create the target...
- 		bool newDependency = true;
+ 		
+                m_file.WriteLine("# Compiles file {0} for the {1} configuration...", filename, configurationInfo.Name);
+                m_file.WriteLine("-include {0}", dependenciesPath);
+
+		bool newDependency = true;
                 if (!newDependency)
                 {
                     m_file.WriteLine("{0}: {1}", objectPath, filename);
@@ -614,11 +618,22 @@ namespace MakeItSo
                 {
                     m_file.WriteLine("{0}: {1} {2}", objectPath, filename, dependenciesPath);
                 }
-                m_file.WriteLine("# Compiles file {0} for the {1} configuration...", filename, configurationInfo.Name);
-                m_file.WriteLine("-include {0}", dependenciesPath);
-                m_file.WriteLine("{0}: {1}", objectPath, filename);
+ m_file.WriteLine("\tmkdir -p {0} ", objectDir);
                 m_file.WriteLine("\t{0} {1} {2} -c {3} {4} -o {5}", compiler, preprocessorDefinitions, compilerFlags, filename, includePath, objectPath);
-                m_file.WriteLine("\t{0} {1} {2} -MM {3} {4} > {5}", compiler, preprocessorDefinitions, compilerFlags, filename, includePath, dependenciesPath);
+                if (!newDependency)
+                {
+                    m_file.WriteLine("\t{0} {1} {2} -MM {3} {4} > {5}", compiler, preprocessorDefinitions, compilerFlags, filename, includePath, dependenciesPath);
+                }
+                else
+                {//new dependecy scheme
+                    // ${fname}.d contains the dependencies for ${fname}.o (headers file) and is included in the makefile using the -include above the rule for making ${fname}.o");
+                    m_file.WriteLine("{0}: {1}", dependenciesPath, filename);
+                    m_file.WriteLine("\tmkdir -p {0} ", objectDir);
+                    m_file.WriteLine("\t{0} {1} {2} {3} -MF\"$@\" -MG -MM -MP -MT\"$@\" -MT\"{4}\" \"$<\" ", compiler, preprocessorDefinitions, compilerFlags, includePath, objectPath);
+                    //using explicit .o file name instead of the original suggestion above, since it can be both cc or cpp
+                    m_file.WriteLine("\tsed -i -e 's/\\.d/\\.o/g' $@ #replaces .d with .o in .d file");
+
+                }
                 m_file.WriteLine("");
             }
         }
