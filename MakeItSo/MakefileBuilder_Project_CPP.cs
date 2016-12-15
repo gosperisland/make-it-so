@@ -605,6 +605,15 @@ namespace MakeItSo
                 }
 
                 // We create the target...
+ 		bool newDependency = true;
+                if (!newDependency)
+                {
+                    m_file.WriteLine("{0}: {1}", objectPath, filename);
+                }
+                else
+                {
+                    m_file.WriteLine("{0}: {1} {2}", objectPath, filename, dependenciesPath);
+                }
                 m_file.WriteLine("# Compiles file {0} for the {1} configuration...", filename, configurationInfo.Name);
                 m_file.WriteLine("-include {0}", dependenciesPath);
                 m_file.WriteLine("{0}: {1}", objectPath, filename);
